@@ -1,60 +1,5 @@
 "use strict";
 
-// Cette copie permet à la page de fonctionner même avec un double-clic sur index.html.
-// Depuis un serveur local, les mêmes données sont chargées depuis data/sellers.csv.
-const FALLBACK_SELLERS = [
-  {
-    entreprise: "Atelier Céleste",
-    responsable: "Léa Martin",
-    email: "lea.martin@atelier-celeste.example",
-    telephone: "06 12 34 56 78",
-    assignee: "",
-    statut: "À attribuer",
-    dateArrivee: "28/07/2026",
-    note: "Compte à créer",
-  },
-  {
-    entreprise: "Maison Rivage",
-    responsable: "Thomas Bernard",
-    email: "thomas.bernard@maison-rivage.example",
-    telephone: "06 23 45 67 89",
-    assignee: "Camille Dupont",
-    statut: "En cours",
-    dateArrivee: "25/07/2026",
-    note: "Documents à vérifier",
-  },
-  {
-    entreprise: "Studio Mistral",
-    responsable: "Inès Robert",
-    email: "ines.robert@studio-mistral.example",
-    telephone: "06 34 56 78 90",
-    assignee: "Malik Benali",
-    statut: "Bloqué",
-    dateArrivee: "22/07/2026",
-    note: "TVA manquante",
-  },
-  {
-    entreprise: "L’Atelier Vert",
-    responsable: "Hugo Petit",
-    email: "hugo.petit@atelier-vert.example",
-    telephone: "06 45 67 89 01",
-    assignee: "",
-    statut: "À attribuer",
-    dateArrivee: "30/07/2026",
-    note: "Coordonnées bancaires à recevoir",
-  },
-  {
-    entreprise: "Éclat & Co",
-    responsable: "Sarah Moreau",
-    email: "sarah.moreau@eclat-co.example",
-    telephone: "06 56 78 90 12",
-    assignee: "Camille Dupont",
-    statut: "En cours",
-    dateArrivee: "30/07/2026",
-    note: "Catalogue à valider",
-  },
-];
-
 const CURRENT_USER = "Camille Dupont";
 let sellers = [];
 let notificationTimer;
@@ -70,6 +15,8 @@ const elements = {
   tableBody: document.querySelector("#sellers-table-body"),
   tableSummary: document.querySelector("#table-summary"),
   notification: document.querySelector("#notification"),
+  dataError: document.querySelector("#data-error"),
+  dashboardSections: document.querySelectorAll(".dashboard-section"),
 };
 
 function escapeHtml(value) {
@@ -132,25 +79,67 @@ function parseCsv(csvText) {
 }
 
 async function loadSellers() {
-  try {
-    const response = await fetch("data/sellers.csv", { cache: "no-store" });
+  const response = await fetch("data/sellers.csv", { cache: "no-store" });
 
-    if (!response.ok) {
-      throw new Error(`Le CSV n’a pas pu être chargé (${response.status}).`);
-    }
-
-    const csvSellers = parseCsv(await response.text());
-
-    if (csvSellers.length !== FALLBACK_SELLERS.length) {
-      throw new Error("Le nombre de vendeurs du CSV est inattendu.");
-    }
-
-    return csvSellers;
-  } catch (error) {
-    // C’est le comportement normal avec une URL qui commence par file://.
-    console.info("Données de secours utilisées :", error.message);
-    return FALLBACK_SELLERS.map((seller) => ({ ...seller }));
+  if (!response.ok) {
+    throw new Error(`Le CSV n’a pas pu être chargé (${response.status}).`);
   }
+
+  const csvSellers = parseCsv(await response.text());
+
+  if (csvSellers.length === 0) {
+    throw new Error("Le CSV ne contient aucun vendeur.");
+  }
+
+  return csvSellers;
+}
+
+function showLoadError(error) {
+  console.error("Chargement des vendeurs impossible :", error);
+  elements.dashboardSections.forEach((section) => {
+    section.hidden = true;
+  });
+  elements.dataError.hidden = false;
+}
+
+function getSellerDetailsId(seller) {
+  return `seller-details-${sellers.indexOf(seller)}`;
+}
+
+function renderSellerDetails(seller) {
+  const detailsId = getSellerDetailsId(seller);
+  const phoneLink = seller.telephone.replace(/\s/g, "");
+
+  return `
+    <dl id="${detailsId}" class="card-details" hidden>
+      <div><dt>Entreprise</dt><dd>${escapeHtml(seller.entreprise)}</dd></div>
+      <div><dt>Responsable</dt><dd>${escapeHtml(seller.responsable)}</dd></div>
+      <div><dt>E-mail</dt><dd><a href="mailto:${escapeHtml(seller.email)}">${escapeHtml(seller.email)}</a></dd></div>
+      <div><dt>Téléphone</dt><dd><a href="tel:${escapeHtml(phoneLink)}">${escapeHtml(seller.telephone)}</a></dd></div>
+      <div><dt>Assigné·e</dt><dd>${escapeHtml(seller.assignee || "Non assigné·e")}</dd></div>
+      <div><dt>Statut</dt><dd><span class="status-pill" data-status="${escapeHtml(seller.statut)}">${escapeHtml(seller.statut)}</span></dd></div>
+      <div><dt>Date d’arrivée</dt><dd>${escapeHtml(seller.dateArrivee)}</dd></div>
+      <div class="detail-wide"><dt>Note</dt><dd>${escapeHtml(seller.note)}</dd></div>
+    </dl>
+  `;
+}
+
+function renderCardToggle(seller, summaryContent) {
+  const detailsId = getSellerDetailsId(seller);
+
+  return `
+    <button
+      class="card-toggle"
+      type="button"
+      data-company="${escapeHtml(seller.entreprise)}"
+      aria-expanded="false"
+      aria-controls="${detailsId}"
+      aria-label="Afficher les informations de ${escapeHtml(seller.entreprise)}"
+    >
+      <span class="card-summary">${summaryContent}</span>
+      <span class="card-toggle-indicator" aria-hidden="true">⌄</span>
+    </button>
+  `;
 }
 
 function renderUnassignedCards() {
@@ -164,17 +153,20 @@ function renderUnassignedCards() {
 
   elements.unassignedList.innerHTML = unassignedSellers.map((seller) => `
     <article class="seller-card">
-      <div>
-        <h3>${escapeHtml(seller.entreprise)}</h3>
-        <p>Contact : ${escapeHtml(seller.responsable)}</p>
+      <div class="card-main-row">
+        ${renderCardToggle(seller, `
+          <h3>${escapeHtml(seller.entreprise)}</h3>
+          <p>Contact : ${escapeHtml(seller.responsable)}</p>
+        `)}
+        <button
+          class="assign-button"
+          type="button"
+          data-company="${escapeHtml(seller.entreprise)}"
+          aria-label="M’attribuer le vendeur ${escapeHtml(seller.entreprise)}"
+          title="M’attribuer ce vendeur"
+        >+</button>
       </div>
-      <button
-        class="assign-button"
-        type="button"
-        data-company="${escapeHtml(seller.entreprise)}"
-        aria-label="M’attribuer le vendeur ${escapeHtml(seller.entreprise)}"
-        title="M’attribuer ce vendeur"
-      >+</button>
+      ${renderSellerDetails(seller)}
     </article>
   `).join("");
 }
@@ -189,12 +181,15 @@ function renderMyCases() {
 
   elements.myCasesList.innerHTML = myCases.map((seller) => `
     <article class="seller-card">
-      <div>
-        <h3>${escapeHtml(seller.entreprise)}</h3>
-        <p>Contact : ${escapeHtml(seller.responsable)}</p>
-        <p class="card-note">${escapeHtml(seller.note)}</p>
+      <div class="card-main-row">
+        ${renderCardToggle(seller, `
+          <h3>${escapeHtml(seller.entreprise)}</h3>
+          <p>Contact : ${escapeHtml(seller.responsable)}</p>
+          <p class="card-note">${escapeHtml(seller.note)}</p>
+        `)}
+        <span class="status-pill card-status" data-status="${escapeHtml(seller.statut)}">${escapeHtml(seller.statut)}</span>
       </div>
-      <span class="status-pill" data-status="${escapeHtml(seller.statut)}">${escapeHtml(seller.statut)}</span>
+      ${renderSellerDetails(seller)}
     </article>
   `).join("");
 }
@@ -277,17 +272,57 @@ function assignSeller(companyName) {
   showNotification(`${seller.entreprise} est maintenant attribué à ${CURRENT_USER}.`);
 }
 
-elements.unassignedList.addEventListener("click", (event) => {
-  const button = event.target.closest(".assign-button");
+function toggleSellerCard(button) {
+  const isExpanded = button.getAttribute("aria-expanded") === "true";
+  const details = document.querySelector(`#${button.getAttribute("aria-controls")}`);
+  const card = button.closest(".seller-card");
+  const companyName = button.dataset.company;
 
-  if (button) {
-    assignSeller(button.dataset.company);
+  button.setAttribute("aria-expanded", String(!isExpanded));
+  button.setAttribute(
+    "aria-label",
+    `${isExpanded ? "Afficher" : "Masquer"} les informations de ${companyName}`,
+  );
+  details.hidden = isExpanded;
+  card.classList.toggle("is-expanded", !isExpanded);
+}
+
+function handleCardListClick(event) {
+  const assignButton = event.target.closest(".assign-button");
+
+  if (assignButton) {
+    assignSeller(assignButton.dataset.company);
+    return;
   }
-});
+
+  const toggleButton = event.target.closest(".card-toggle");
+
+  if (toggleButton) {
+    toggleSellerCard(toggleButton);
+  }
+}
+
+function handleCardListKeydown(event) {
+  const isActivationKey = event.key === "Enter" || event.key === " ";
+
+  if (isActivationKey && event.target.matches(".card-toggle")) {
+    event.preventDefault();
+    toggleSellerCard(event.target);
+  }
+}
+
+elements.unassignedList.addEventListener("click", handleCardListClick);
+elements.myCasesList.addEventListener("click", handleCardListClick);
+elements.unassignedList.addEventListener("keydown", handleCardListKeydown);
+elements.myCasesList.addEventListener("keydown", handleCardListKeydown);
 
 elements.statusFilter.addEventListener("change", renderTable);
 
 document.addEventListener("DOMContentLoaded", async () => {
-  sellers = await loadSellers();
-  renderDashboard();
+  try {
+    sellers = await loadSellers();
+    renderDashboard();
+  } catch (error) {
+    showLoadError(error);
+  }
 });

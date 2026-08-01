@@ -117,6 +117,26 @@ select {
   margin-top: 58px;
 }
 
+.load-error {
+  max-width: 760px;
+  margin-top: -22px;
+  padding: 26px 28px;
+  border: 1px solid #e7c2ba;
+  border-radius: var(--radius-medium);
+  background: #fff4f1;
+}
+
+.load-error h2 {
+  margin: 0 0 0.6rem;
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  letter-spacing: -0.03em;
+}
+
+.load-error p:last-child {
+  margin: 0;
+  color: #76554e;
+}
+
 .priority-section {
   padding: clamp(24px, 4vw, 42px);
   border: 1px solid var(--mint-strong);
@@ -158,23 +178,82 @@ select {
 }
 
 .seller-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
   min-height: 148px;
-  padding: 24px;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-medium);
   background: var(--surface);
   box-shadow: 0 1px 0 rgba(23, 37, 34, 0.02);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .seller-card:hover {
   border-color: #b8cec6;
   box-shadow: var(--shadow);
-  transform: translateY(-2px);
-  transition: 180ms ease;
+}
+
+.seller-card.is-expanded {
+  grid-column: span 2;
+  border-color: #a9c5bb;
+  box-shadow: var(--shadow);
+}
+
+.card-main-row {
+  display: flex;
+  min-height: 146px;
+  padding: 10px 18px 10px 8px;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card-toggle {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  padding: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 0;
+  border-radius: 12px;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card-toggle:hover {
+  background: #f7faf8;
+}
+
+.card-toggle:focus-visible {
+  outline: 3px solid rgba(23, 107, 88, 0.3);
+  outline-offset: -2px;
+}
+
+.card-summary {
+  min-width: 0;
+}
+
+.card-toggle-indicator {
+  flex: 0 0 auto;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--green-dark);
+  background: var(--mint);
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.card-toggle[aria-expanded="true"] .card-toggle-indicator {
+  background: var(--mint-strong);
+  transform: rotate(180deg);
 }
 
 .seller-card h3 {
@@ -192,6 +271,51 @@ select {
 .seller-card .card-note {
   margin-top: 0.3rem;
   font-size: 0.86rem;
+}
+
+.card-status {
+  flex: 0 0 auto;
+}
+
+.card-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 28px;
+  margin: 0 24px;
+  padding: 24px 0 28px;
+  border-top: 1px solid var(--line);
+}
+
+.card-details[hidden] {
+  display: none;
+}
+
+.card-details div {
+  min-width: 0;
+}
+
+.card-details .detail-wide {
+  grid-column: 1 / -1;
+}
+
+.card-details dt {
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+}
+
+.card-details a {
+  color: var(--green-dark);
+  text-underline-offset: 0.18em;
 }
 
 .assign-button {
@@ -440,7 +564,35 @@ tbody tr:hover {
 
   .seller-card {
     min-height: 125px;
-    padding: 20px;
+  }
+
+  .seller-card.is-expanded {
+    grid-column: auto;
+  }
+
+  .card-main-row {
+    min-height: 123px;
+    padding-right: 12px;
+  }
+
+  .card-toggle {
+    padding: 14px 12px;
+  }
+
+  .card-toggle-indicator {
+    width: 30px;
+    height: 30px;
+  }
+
+  .card-details {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-inline: 20px;
+    padding-top: 20px;
+  }
+
+  .card-details .detail-wide {
+    grid-column: auto;
   }
 
   .stats-grid {
