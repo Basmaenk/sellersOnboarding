@@ -1,16 +1,131 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sellers Onboarding</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <main>
-    <h1>Sellers Onboarding</h1>
-  </main>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Tableau de bord local de suivi de l’onboarding des vendeurs."
+    />
+    <title>Sellers Onboarding</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#contenu">Sellers Onboarding</a>
+      <p class="user-label">
+        <span aria-hidden="true" class="user-dot"></span> Camille Dupont
+      </p>
+    </header>
 
-  <script src="script.js"></script>
-</body>
+    <main id="contenu" class="page-shell">
+      <section class="hero" aria-labelledby="welcome-title">
+        <p class="eyebrow">Espace équipe</p>
+        <h1 id="welcome-title">Bonjour Team Onboarding</h1>
+        <p>
+          Retrouvez vos dossiers et la vue partager de tous les onboardings.
+        </p>
+      </section>
+
+      <section
+        class="dashboard-section priority-section"
+        aria-labelledby="unassigned-title"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">À traiter en priorité</p>
+            <h2 id="unassigned-title">Nouveau vendeurs à onboarder</h2>
+          </div>
+          <span id="unassigned-badge" class="count-badge" aria-hidden="true"
+            >0</span
+          >
+        </div>
+        <div id="unassigned-list" class="card-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="dashboard-section" aria-labelledby="my-cases-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Votre espace</p>
+            <h2 id="my-cases-title">Mes dossiers en cours</h2>
+          </div>
+        </div>
+        <div id="my-cases-list" class="card-grid"></div>
+      </section>
+
+      <section class="dashboard-section" aria-labelledby="overview-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">En un coup d’œil</p>
+            <h2 id="overview-title">Vue d’ensemble</h2>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span id="total-count" class="stat-number">0</span>
+            <span class="stat-label">Vendeurs au total</span>
+          </article>
+          <article class="stat-card">
+            <span id="progress-count" class="stat-number">0</span>
+            <span class="stat-label">Dossiers en cours</span>
+          </article>
+          <article class="stat-card">
+            <span id="unassigned-count" class="stat-number">0</span>
+            <span class="stat-label">Vendeurs à attribuer</span>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="dashboard-section team-section"
+        aria-labelledby="team-title"
+      >
+        <div class="section-heading team-heading">
+          <div>
+            <p class="section-kicker">Suivi partagé</p>
+            <h2 id="team-title">
+              Vue équipe <span aria-hidden="true">·</span> tous les vendeurs
+            </h2>
+          </div>
+          <label class="filter-label" for="status-filter">
+            <span>Filtrer par statut</span>
+            <select id="status-filter">
+              <option value="Tous">Tous les statuts</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <caption class="visually-hidden">
+              Liste complète des vendeurs suivis par l’équipe
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Entreprise</th>
+                <th scope="col">Responsable</th>
+                <th scope="col">E-mail</th>
+                <th scope="col">Téléphone</th>
+                <th scope="col">Assigné·e</th>
+                <th scope="col">Statut</th>
+                <th scope="col">Date d’arrivée</th>
+                <th scope="col">Note</th>
+              </tr>
+            </thead>
+            <tbody id="sellers-table-body"></tbody>
+          </table>
+        </div>
+        <p id="table-summary" class="table-summary"></p>
+      </section>
+    </main>
+
+    <div
+      id="notification"
+      class="notification"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <script src="script.js"></script>
+  </body>
 </html>
